@@ -1,0 +1,116 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isDocOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (getUserData().role == 'ADMIN' ||
+          (request.auth.token.email == "mwathid8@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isStaff() {
+      return isAuthenticated() && getUserData().role == 'STAFF';
+    }
+
+    function hasBranchAccess(branch) {
+      return isAdmin() || (isStaff() && getUserData().branch == branch);
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role', 'branch']) &&
+             data.uid is string &&
+             data.email is string &&
+             data.role in ['ADMIN', 'STAFF'] &&
+             data.branch in ['AMPOH LIMITED', 'AMPOH MEDICAL CENTRE', 'COMBINED'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{uid} {
+      allow read: if isDocOwner(uid) || isAdmin();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && (isAdmin() || isDocOwner(uid));
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && (isAdmin() || (isDocOwner(uid) && request.resource.data.role == resource.data.role));
+    }
+
+    match /patients/{patientId} {
+      allow read: if hasBranchAccess(resource.data.branch);
+      allow create: if hasBranchAccess(request.resource.data.branch);
+      allow update: if hasBranchAccess(resource.data.branch) && hasBranchAccess(request.resource.data.branch);
+      allow delete: if isAdmin();
+    }
+
+    match /visits/{visitId} {
+      allow read: if hasBranchAccess(resource.data.branch);
+      allow create: if hasBranchAccess(request.resource.data.branch);
+      allow update: if hasBranchAccess(resource.data.branch) && hasBranchAccess(request.resource.data.branch);
+      allow delete: if isAdmin();
+    }
+
+    match /inventory/{itemId} {
+      allow read: if hasBranchAccess(resource.data.branch);
+      allow create: if hasBranchAccess(request.resource.data.branch);
+      allow update: if hasBranchAccess(resource.data.branch) && hasBranchAccess(request.resource.data.branch);
+      allow delete: if isAdmin();
+    }
+
+    match /appointments/{appointmentId} {
+      allow read: if hasBranchAccess(resource.data.branch);
+      allow create: if hasBranchAccess(request.resource.data.branch);
+      allow update: if hasBranchAccess(resource.data.branch) && hasBranchAccess(request.resource.data.branch);
+      allow delete: if isAdmin();
+    }
+
+    match /services/{serviceId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+    }
+
+    match /bills/{billId} {
+      allow read: if hasBranchAccess(resource.data.branch);
+      allow create: if hasBranchAccess(request.resource.data.branch);
+      allow update: if hasBranchAccess(resource.data.branch) && hasBranchAccess(request.resource.data.branch);
+    }
+
+    match /lab_requests/{requestId} {
+      allow read: if hasBranchAccess(resource.data.branch);
+      allow create: if hasBranchAccess(request.resource.data.branch);
+      allow update: if hasBranchAccess(resource.data.branch) && hasBranchAccess(request.resource.data.branch);
+    }
+
+    match /procedures/{procId} {
+      allow read: if hasBranchAccess(resource.data.branch);
+      allow create: if hasBranchAccess(request.resource.data.branch);
+    }
+
+    match /prescriptions/{prescId} {
+      allow read: if hasBranchAccess(resource.data.branch);
+      allow create: if hasBranchAccess(request.resource.data.branch);
+    }
+
+    match /payments/{paymentId} {
+      allow read: if hasBranchAccess(resource.data.branch);
+      allow create: if hasBranchAccess(request.resource.data.branch);
+    }
+  }
+}

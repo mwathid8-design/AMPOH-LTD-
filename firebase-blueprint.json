@@ -1,0 +1,124 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "System user (staff or admin)",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["ADMIN", "STAFF"] },
+        "branch": { "type": "string", "enum": ["CLINIC_A", "CLINIC_B", "COMBINED"] },
+        "clinicName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role", "branch"]
+    },
+    "Patient": {
+      "title": "Patient",
+      "description": "Patient record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientNumber": { "type": "string" },
+        "name": { "type": "string" },
+        "phone": { "type": "string" },
+        "gender": { "type": "string", "enum": ["Male", "Female", "Other"] },
+        "dob": { "type": "string", "format": "date" },
+        "address": { "type": "string" },
+        "branch": { "type": "string", "enum": ["CLINIC_A", "CLINIC_B"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["patientNumber", "name", "gender", "branch"]
+    },
+    "Visit": {
+      "title": "Visit",
+      "description": "Patient visit record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "patientNumber": { "type": "string" },
+        "branch": { "type": "string", "enum": ["CLINIC_A", "CLINIC_B"] },
+        "status": { "type": "string", "enum": ["TRIAGE", "CONSULTATION", "LAB", "PHARMACY", "BILLING", "COMPLETED"] },
+        "triageData": { "type": "object" },
+        "clinicalNotes": { "type": "string" },
+        "diagnosis": { "type": "string" },
+        "labRequests": { "type": "array", "items": { "type": "string" } },
+        "prescriptions": { "type": "array", "items": { "type": "object" } },
+        "billingData": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["patientId", "branch", "status", "createdAt"]
+    },
+    "InventoryItem": {
+      "title": "InventoryItem",
+      "description": "Drug or medical supply",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "quantity": { "type": "number" },
+        "price": { "type": "number" },
+        "branch": { "type": "string", "enum": ["CLINIC_A", "CLINIC_B"] },
+        "expiryDate": { "type": "string", "format": "date" }
+      },
+      "required": ["name", "quantity", "price", "branch"]
+    },
+    "Appointment": {
+      "title": "Appointment",
+      "description": "Scheduled patient appointment",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientId": { "type": "string" },
+        "patientName": { "type": "string" },
+        "branch": { "type": "string", "enum": ["CLINIC_A", "CLINIC_B"] },
+        "date": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"] },
+        "notes": { "type": "string" }
+      },
+      "required": ["patientId", "branch", "date", "status"]
+    },
+    "Service": {
+      "title": "Service",
+      "description": "Medical service or procedure pricing",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string", "enum": ["CONSULTATION", "LAB", "PROCEDURE", "PHARMACY", "OTHER"] },
+        "price": { "type": "number" },
+        "branch": { "type": "string", "enum": ["AMPOH LIMITED", "AMPOH MEDICAL CENTRE", "BOTH"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "category", "price", "branch"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "System audit trail entry",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "action": { "type": "string" },
+        "target": { "type": "string" },
+        "branch": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "userName", "action", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": { "schema": "User", "description": "User profiles" },
+    "/patients/{patientId}": { "schema": "Patient", "description": "Patient records" },
+    "/visits/{visitId}": { "schema": "Visit", "description": "Visit records" },
+    "/inventory/{itemId}": { "schema": "InventoryItem", "description": "Inventory items" },
+    "/appointments/{appointmentId}": { "schema": "Appointment", "description": "Appointments" },
+    "/services/{serviceId}": { "schema": "Service", "description": "Medical services" },
+    "/audit_logs/{logId}": { "schema": "AuditLog", "description": "System logs" }
+  }
+}
